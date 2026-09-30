@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { 
   X, Moon, TrendingUp, DollarSign, Award, AlertCircle, 
-  CheckCircle, ArrowUpRight, HelpCircle, Save 
+  CheckCircle, ArrowUpRight, HelpCircle, Save, Sparkles,
+  Banknote, Smartphone
 } from 'lucide-react';
 import { saveDailyClosing } from '../services/api';
 
@@ -25,10 +26,24 @@ export default function CloseShopModal({
   const stats = useMemo(() => {
     let totalRevenue = 0;
     let totalCogs = 0;
+    let cashRevenue = 0;
+    let gpayRevenue = 0;
+    let cashCount = 0;
+    let gpayCount = 0;
     const productStats = {}; // { [id]: { name, qty, revenue, profit } }
 
     todayInvoices.forEach(inv => {
-      totalRevenue += Number(inv.total || 0);
+      const amt = Number(inv.total || 0);
+      totalRevenue += amt;
+
+      const method = (inv.paymentMethod || '').toLowerCase();
+      if (method.includes('cash')) {
+        cashRevenue += amt;
+        cashCount += 1;
+      } else {
+        gpayRevenue += amt;
+        gpayCount += 1;
+      }
 
       (inv.items || []).forEach(item => {
         const qty = Number(item.quantity || 1);
@@ -76,6 +91,10 @@ export default function CloseShopModal({
     return {
       totalInvoices: todayInvoices.length,
       totalRevenue,
+      cashRevenue,
+      gpayRevenue,
+      cashCount,
+      gpayCount,
       totalCogs,
       grossProfit,
       netProfit,
@@ -95,6 +114,10 @@ export default function CloseShopModal({
         closedAt: new Date().toISOString(),
         closedBy: 'admin',
         totalRevenue: stats.totalRevenue,
+        cashRevenue: stats.cashRevenue,
+        gpayRevenue: stats.gpayRevenue,
+        cashCount: stats.cashCount,
+        gpayCount: stats.gpayCount,
         totalCogs: stats.totalCogs,
         grossProfit: stats.grossProfit,
         miscExpenses: Number(miscExpenses) || 0,
@@ -119,7 +142,7 @@ export default function CloseShopModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-card" style={{ maxWidth: 640, padding: '28px 24px' }}>
+      <div className="modal-card" style={{ maxWidth: 660, padding: '28px 24px' }}>
         <button type="button" className="modal-close-btn" onClick={onClose}>
           <X size={18} />
         </button>
@@ -139,30 +162,91 @@ export default function CloseShopModal({
           </div>
         </div>
 
-        {/* Top 3 Metric Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, margin: '20px 0' }}>
-          <div style={{ background: '#FFF0F6', padding: '14px', borderRadius: '16px', border: '1px solid #FFD4E5' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)' }}>Today's Revenue</span>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 900, color: 'var(--primary)', marginTop: 4 }}>
-              ₹{stats.totalRevenue.toFixed(2)}
+        {/* DEDICATED PROMPT BOX: TODAY'S SALES, PROFIT, CASH & GPAY */}
+        <div style={{
+          background: '#FFFFFF',
+          border: '2px solid #FB4692',
+          borderRadius: '20px',
+          padding: '18px 20px',
+          boxShadow: '0 8px 30px rgba(251, 70, 146, 0.15)',
+          margin: '18px 0 20px 0'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #FFE0ED', paddingBottom: '12px', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={20} color="#FB4692" />
+              <span style={{ fontSize: '14px', fontWeight: 900, textTransform: 'uppercase', color: '#FB4692', letterSpacing: '1px' }}>
+                Today's Sales & Collection Prompt
+              </span>
             </div>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>From {stats.totalInvoices} sales</span>
+            <span style={{ fontSize: '11px', fontWeight: 800, background: '#FFF0F6', color: '#FB4692', padding: '4px 10px', borderRadius: '12px' }}>
+              {stats.totalInvoices} Orders Completed
+            </span>
           </div>
 
-          <div style={{ background: '#F8F9FA', padding: '14px', borderRadius: '16px', border: '1px solid #E9ECEF' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#6C757D' }}>Product Cost (COGS)</span>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 900, color: '#343A40', marginTop: 4 }}>
-              ₹{stats.totalCogs.toFixed(2)}
+          {/* Main 2 Highlight Columns: Total Made & Profit */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+            <div style={{ background: '#FFF0F6', padding: '14px 16px', borderRadius: '16px', border: '1.5px solid #FFD4E5' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#FB4692' }}>
+                Today's Sales (How Much Made)
+              </span>
+              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '26px', fontWeight: 900, color: '#FB4692', marginTop: '4px' }}>
+                ₹{stats.totalRevenue.toFixed(2)}
+              </div>
+              <span style={{ fontSize: '11px', color: '#777' }}>Total revenue earned today</span>
             </div>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Purchase cost of items</span>
+
+            <div style={{ background: stats.netProfit >= 0 ? '#E8FBF2' : '#FFEBEF', padding: '14px 16px', borderRadius: '16px', border: `1.5px solid ${stats.netProfit >= 0 ? '#A4E8CD' : '#FFB3C2'}` }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: stats.netProfit >= 0 ? '#0C8A53' : '#FF3B5C' }}>
+                Net Profit Earned
+              </span>
+              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '26px', fontWeight: 900, color: stats.netProfit >= 0 ? '#0C8A53' : '#FF3B5C', marginTop: '4px' }}>
+                ₹{stats.netProfit.toFixed(2)}
+              </div>
+              <span style={{ fontSize: '11px', color: stats.netProfit >= 0 ? '#0C8A53' : '#FF3B5C' }}>
+                Gross: ₹{stats.grossProfit.toFixed(0)} • Margin: {stats.profitMargin}%
+              </span>
+            </div>
           </div>
 
-          <div style={{ background: stats.netProfit >= 0 ? '#E8FBF2' : '#FFEBEF', padding: '14px', borderRadius: '16px', border: `1px solid ${stats.netProfit >= 0 ? '#A4E8CD' : '#FFB3C2'}` }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: stats.netProfit >= 0 ? '#0C8A53' : '#FF3B5C' }}>Net Profit</span>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 900, color: stats.netProfit >= 0 ? '#0C8A53' : '#FF3B5C', marginTop: 4 }}>
-              ₹{stats.netProfit.toFixed(2)}
+          {/* Cash vs Google Pay Breakdown Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* CASH CARD */}
+            <div style={{ background: '#F0FFF4', border: '1.5px solid #9AE6B4', borderRadius: '14px', padding: '12px 14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#276749', fontSize: '12px', fontWeight: 800 }}>
+                  <Banknote size={18} />
+                  <span>Cash Collected</span>
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#2F855A', background: '#C6F6D5', padding: '2px 8px', borderRadius: '10px' }}>
+                  {stats.cashCount} bills
+                </span>
+              </div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: '#22543D', marginTop: '6px' }}>
+                ₹{stats.cashRevenue.toFixed(2)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#2F855A', marginTop: '2px' }}>
+                {stats.totalRevenue > 0 ? ((stats.cashRevenue / stats.totalRevenue) * 100).toFixed(0) : 0}% of today's total
+              </div>
             </div>
-            <span style={{ fontSize: 11, color: stats.netProfit >= 0 ? '#0C8A53' : '#FF3B5C' }}>Margin: {stats.profitMargin}%</span>
+
+            {/* GPAY CARD */}
+            <div style={{ background: '#EBF8FF', border: '1.5px solid #90CDF4', borderRadius: '14px', padding: '12px 14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#2B6CB0', fontSize: '12px', fontWeight: 800 }}>
+                  <Smartphone size={18} />
+                  <span>Google Pay (GPay)</span>
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#2B6CB0', background: '#BEE3F8', padding: '2px 8px', borderRadius: '10px' }}>
+                  {stats.gpayCount} bills
+                </span>
+              </div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: '#2A4365', marginTop: '6px' }}>
+                ₹{stats.gpayRevenue.toFixed(2)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#2B6CB0', marginTop: '2px' }}>
+                {stats.totalRevenue > 0 ? ((stats.gpayRevenue / stats.totalRevenue) * 100).toFixed(0) : 0}% of today's total
+              </div>
+            </div>
           </div>
         </div>
 

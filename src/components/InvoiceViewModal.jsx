@@ -162,8 +162,8 @@ export default function InvoiceViewModal({
                 <h4 style={{ margin: '4px 0 2px 0', fontSize: 17, color: '#FB4692' }}>#{invoice.invoiceNumber}</h4>
                 <p style={{ margin: '2px 0', fontSize: 12, color: '#555' }}>{dateStr}</p>
                 
-                <p style={{ margin: '4px 0 0 0', fontSize: 12, fontWeight: 600, color: '#1C0F17' }}>
-                  Paid via Google Pay
+                <p style={{ margin: '4px 0 0 0', fontSize: 12, fontWeight: 700, color: invoice.paymentMethod === 'Cash' ? '#0C8A53' : '#1C0F17' }}>
+                  Paid via {invoice.paymentMethod === 'Cash' ? 'Cash' : 'Google Pay'}
                 </p>
 
                 {invoice.mode === 'challenger' && (

@@ -204,6 +204,11 @@ function saveDb(data) {
 // Convert Logo to base64 or public web link for email
 function getLogoBase64() {
   try {
+    const smallLogo = path.join(rootDir, 'public', 'logo_email.png');
+    if (fs.existsSync(smallLogo)) {
+      const buffer = fs.readFileSync(smallLogo);
+      return `data:image/png;base64,${buffer.toString('base64')}`;
+    }
     const logoPath = path.join(rootDir, 'public', 'logo.png');
     if (fs.existsSync(logoPath)) {
       const buffer = fs.readFileSync(logoPath);
@@ -212,22 +217,25 @@ function getLogoBase64() {
   } catch (e) {
     console.error('Error reading logo for email:', e);
   }
-  return '';
+  return 'https://raw.githubusercontent.com/anshaj4/velvette-pos/main/public/logo.png';
 }
 
-// Generate Clean, Minimal Invoice HTML template for email
+// Generate Barbie Pink Invoice Email HTML template
 function generateInvoiceEmailHtml(invoice) {
   const dateStr = new Date(invoice.createdAt || Date.now()).toLocaleString('en-IN', {
     dateStyle: 'medium',
     timeStyle: 'short'
   });
 
+  const logoData = getLogoBase64();
+  const paymentText = invoice.paymentMethod === 'Cash' ? 'Paid via Cash' : 'Paid via Google Pay';
+
   const itemsRows = (invoice.items || []).map(item => `
-    <tr style="border-bottom: 1px solid #F0EDF0;">
-      <td style="padding: 12px 8px; font-weight: 600; color: #1F121E; font-size: 13px;">${item.name}</td>
-      <td style="padding: 12px 8px; text-align: center; color: #666; font-size: 13px;">${item.quantity}</td>
-      <td style="padding: 12px 8px; text-align: right; color: #666; font-size: 13px;">₹${Number(item.price).toFixed(2)}</td>
-      <td style="padding: 12px 8px; text-align: right; font-weight: 700; color: #1F121E; font-size: 13px;">₹${(item.price * item.quantity).toFixed(2)}</td>
+    <tr style="border-bottom: 1px solid #FFEBF2;">
+      <td style="padding: 12px 10px; font-weight: 600; color: #1C0F17; font-size: 13px;">${item.name}</td>
+      <td style="padding: 12px 10px; text-align: center; color: #555; font-size: 13px;">${item.quantity}</td>
+      <td style="padding: 12px 10px; text-align: right; color: #555; font-size: 13px;">₹${Number(item.price).toFixed(2)}</td>
+      <td style="padding: 12px 10px; text-align: right; font-weight: 700; color: #FB4692; font-size: 13px;">₹${(item.price * item.quantity).toFixed(2)}</td>
     </tr>
   `).join('');
 
@@ -239,79 +247,90 @@ function generateInvoiceEmailHtml(invoice) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Velvette Receipt #${invoice.invoiceNumber}</title>
     </head>
-    <body style="margin: 0; padding: 24px 12px; background-color: #F7F5F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1C0F17;">
-      <div style="max-width: 540px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; border: 1px solid #EBE4E8; overflow: hidden;">
-        
-        <!-- MINIMAL WHITE HEADER -->
-        <div style="padding: 30px 24px 20px; text-align: center; border-bottom: 1px solid #F0EDF0;">
-          <h1 style="color: #FB4692; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 3px;">VELVETTE</h1>
-          <p style="margin: 6px 0 0 0; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;">Receipt #${invoice.invoiceNumber}</p>
-        </div>
+    <body style="margin: 0; padding: 32px 12px; background-color: #FB4692; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1C0F17;">
+      <!-- Pink Outer Table -->
+      <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FB4692;">
+        <tr>
+          <td align="center" style="padding: 10px 0;">
+            
+            <div style="max-width: 540px; margin: 0 auto; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.18);">
+              
+              <!-- WHITE TOP BANNER WITH CENTERED LOGO -->
+              <div style="background-color: #FFFFFF; padding: 26px 20px 20px; text-align: center; border-bottom: 3px solid #FB4692;">
+                <img src="${logoData}" alt="Velvette" style="max-height: 64px; max-width: 240px; height: auto; width: auto; display: block; margin: 0 auto;" />
+                <p style="margin: 8px 0 0 0; color: #FB4692; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">
+                  Customer Receipt #${invoice.invoiceNumber}
+                </p>
+              </div>
 
-        <!-- DETAILS ROW -->
-        <div style="padding: 24px 24px 18px; border-bottom: 1px solid #F0EDF0;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="vertical-align: top; width: 55%;">
-                <p style="margin: 0 0 4px 0; font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700;">Customer</p>
-                <div style="font-weight: 700; font-size: 14px; color: #1F121E;">${invoice.customer?.name || 'Customer'}</div>
-                ${invoice.customer?.phone ? `<div style="font-size: 12px; color: #555; margin-top: 2px;">Phone: ${invoice.customer.phone}</div>` : ''}
-                ${invoice.customer?.email ? `<div style="font-size: 12px; color: #555; margin-top: 2px;">Email: ${invoice.customer.email}</div>` : ''}
-                <div style="font-size: 11px; color: #888; margin-top: 3px;">ID: ${invoice.customer?.customerId || 'N/A'}</div>
-              </td>
-              <td style="vertical-align: top; text-align: right; width: 45%;">
-                <p style="margin: 0 0 4px 0; font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700;">Order Details</p>
-                <div style="font-size: 12px; color: #555;">${dateStr}</div>
-                <div style="font-size: 12px; color: #1F121E; font-weight: 600; margin-top: 4px;">Paid via Google Pay</div>
-                ${invoice.mode === 'challenger' ? `<div style="font-size: 11px; color: #D97706; font-weight: 700; margin-top: 2px;">Challenger Mode</div>` : ''}
-              </td>
-            </tr>
-          </table>
-        </div>
+              <!-- DETAILS ROW -->
+              <div style="padding: 24px 24px 18px; border-bottom: 1px solid #FFEBF2; background-color: #FFFFFF;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="vertical-align: top; width: 55%;">
+                      <p style="margin: 0 0 4px 0; font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700;">Customer</p>
+                      <div style="font-weight: 700; font-size: 15px; color: #1C0F17;">${invoice.customer?.name || 'Customer'}</div>
+                      ${invoice.customer?.phone ? `<div style="font-size: 12px; color: #555; margin-top: 2px;">Phone: ${invoice.customer.phone}</div>` : ''}
+                      ${invoice.customer?.email ? `<div style="font-size: 12px; color: #555; margin-top: 2px;">Email: ${invoice.customer.email}</div>` : ''}
+                      <div style="font-size: 11px; color: #888; margin-top: 3px;">ID: ${invoice.customer?.customerId || 'N/A'}</div>
+                    </td>
+                    <td style="vertical-align: top; text-align: right; width: 45%;">
+                      <p style="margin: 0 0 4px 0; font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700;">Order Details</p>
+                      <div style="font-size: 12px; color: #555;">${dateStr}</div>
+                      <div style="font-size: 12px; color: #1C0F17; font-weight: 700; margin-top: 4px;">${paymentText}</div>
+                      ${invoice.mode === 'challenger' ? `<div style="font-size: 11px; color: #D97706; font-weight: 700; margin-top: 2px;">Challenger Mode (+₹50)</div>` : ''}
+                    </td>
+                  </tr>
+                </table>
+              </div>
 
-        <!-- ITEMS TABLE -->
-        <div style="padding: 20px 24px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="border-bottom: 1.5px solid #EBE4E8;">
-                <th style="padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: #888; font-weight: 700;">Item</th>
-                <th style="padding: 8px; text-align: center; font-size: 11px; text-transform: uppercase; color: #888; font-weight: 700;">Qty</th>
-                <th style="padding: 8px; text-align: right; font-size: 11px; text-transform: uppercase; color: #888; font-weight: 700;">Price</th>
-                <th style="padding: 8px; text-align: right; font-size: 11px; text-transform: uppercase; color: #888; font-weight: 700;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsRows}
-            </tbody>
-          </table>
+              <!-- ITEMS TABLE -->
+              <div style="padding: 20px 24px; background-color: #FFFFFF;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background-color: #FFF0F6; border-bottom: 1.5px solid #FFD4E5;">
+                      <th style="padding: 10px 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: #FB4692; font-weight: 800;">Item</th>
+                      <th style="padding: 10px 8px; text-align: center; font-size: 11px; text-transform: uppercase; color: #FB4692; font-weight: 800;">Qty</th>
+                      <th style="padding: 10px 8px; text-align: right; font-size: 11px; text-transform: uppercase; color: #FB4692; font-weight: 800;">Price</th>
+                      <th style="padding: 10px 8px; text-align: right; font-size: 11px; text-transform: uppercase; color: #FB4692; font-weight: 800;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${itemsRows}
+                  </tbody>
+                </table>
 
-          <!-- TOTALS SUMMARY -->
-          <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #EBE4E8;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 4px 0; color: #666; font-size: 13px;">Subtotal</td>
-                <td style="padding: 4px 0; text-align: right; font-size: 13px; font-weight: 600; color: #1F121E;">₹${Number(invoice.subtotal).toFixed(2)}</td>
-              </tr>
-              ${Number(invoice.discountPercent) > 0 ? `
-              <tr>
-                <td style="padding: 4px 0; color: #0C8A53; font-size: 13px;">Discount (${invoice.discountPercent}%)</td>
-                <td style="padding: 4px 0; text-align: right; font-size: 13px; font-weight: 600; color: #0C8A53;">- ₹${Number(invoice.discountAmount).toFixed(2)}</td>
-              </tr>
-              ` : ''}
-              <tr style="border-top: 1px solid #F0EDF0;">
-                <td style="padding: 12px 0 4px; font-size: 16px; font-weight: 800; color: #1F121E;">Total</td>
-                <td style="padding: 12px 0 4px; text-align: right; font-size: 18px; font-weight: 800; color: #FB4692;">₹${Number(invoice.total).toFixed(2)}</td>
-              </tr>
-            </table>
-          </div>
-        </div>
+                <!-- TOTALS SUMMARY -->
+                <div style="margin-top: 18px; padding-top: 14px; border-top: 2px dashed #FFD4E5;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="padding: 4px 0; color: #666; font-size: 13px;">Subtotal</td>
+                      <td style="padding: 4px 0; text-align: right; font-size: 13px; font-weight: 600; color: #1C0F17;">₹${Number(invoice.subtotal).toFixed(2)}</td>
+                    </tr>
+                    ${Number(invoice.discountPercent) > 0 ? `
+                    <tr>
+                      <td style="padding: 4px 0; color: #0C8A53; font-size: 13px;">Discount (${invoice.discountPercent}%)</td>
+                      <td style="padding: 4px 0; text-align: right; font-size: 13px; font-weight: 600; color: #0C8A53;">- ₹${Number(invoice.discountAmount).toFixed(2)}</td>
+                    </tr>
+                    ` : ''}
+                    <tr style="border-top: 1px solid #FFE0ED;">
+                      <td style="padding: 12px 0 4px; font-size: 18px; font-weight: 900; color: #FB4692;">Grand Total</td>
+                      <td style="padding: 12px 0 4px; text-align: right; font-size: 20px; font-weight: 900; color: #FB4692;">₹${Number(invoice.total).toFixed(2)}</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
 
-        <!-- MINIMAL CLEAN FOOTER -->
-        <div style="padding: 18px 24px; text-align: center; border-top: 1px solid #F0EDF0; background-color: #FAFAFA;">
-          <p style="margin: 0; font-size: 12px; color: #777;">Thank you for shopping at Velvette.</p>
-        </div>
+              <!-- FOOTER -->
+              <div style="padding: 18px 24px; text-align: center; border-top: 1px solid #FFEBF2; background-color: #FFF9FC;">
+                <p style="margin: 0; font-size: 12px; color: #888; font-weight: 600;">Thank you for shopping at Velvette.</p>
+              </div>
 
-      </div>
+            </div>
+
+          </td>
+        </tr>
+      </table>
     </body>
     </html>
   `;

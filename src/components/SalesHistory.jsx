@@ -45,8 +45,17 @@ export default function SalesHistory({
     const allForDay = invoices.filter(inv => inv.dayId === selectedDay);
     let rev = 0;
     let cogs = 0;
+    let cash = 0;
+    let gpay = 0;
     allForDay.forEach(inv => {
-      rev += Number(inv.total || 0);
+      const amt = Number(inv.total || 0);
+      rev += amt;
+      const m = (inv.paymentMethod || '').toLowerCase();
+      if (m.includes('cash')) {
+        cash += amt;
+      } else {
+        gpay += amt;
+      }
       (inv.items || []).forEach(it => {
         cogs += (Number(it.costPrice || 0) * Number(it.quantity || 1));
       });
@@ -55,6 +64,8 @@ export default function SalesHistory({
       revenue: rev,
       cogs,
       grossProfit: rev - cogs,
+      cashRevenue: cash,
+      gpayRevenue: gpay,
       count: allForDay.length
     };
   }, [invoices, selectedDay]);
@@ -225,6 +236,13 @@ export default function SalesHistory({
 
                       <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: 'var(--text-main)', fontSize: 15 }}>
                         ₹{Number(inv.total).toFixed(2)}
+                        <div style={{ 
+                          fontSize: 11, 
+                          fontWeight: 700, 
+                          color: (inv.paymentMethod || '').toLowerCase().includes('cash') ? '#0C8A53' : '#2B6CB0' 
+                        }}>
+                          {(inv.paymentMethod || '').toLowerCase().includes('cash') ? '💵 Cash' : '📱 GPay'}
+                        </div>
                       </td>
 
                       <td style={{ padding: '12px', textAlign: 'center' }}>
