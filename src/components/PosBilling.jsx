@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Search, Plus, Minus, Trash2, Tag, 
-  Sparkles, Zap, ArrowRight, UserCheck, ShieldCheck, 
+  Sparkles, Zap, ArrowRight, ArrowLeft, ShoppingBag, UserCheck, ShieldCheck, 
   Package, Upload, X, Loader2, Camera 
 } from 'lucide-react';
 import { saveProduct, uploadFile } from '../services/api';
@@ -21,6 +21,7 @@ export default function PosBilling({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [mobileView, setMobileView] = useState('catalog'); // 'catalog' | 'cart'
 
   // Quick Add Product from Screen Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -202,114 +203,70 @@ export default function PosBilling({
     }
   };
 
-  return (
-    <div className="pos-layout">
-      {/* LEFT: Product Catalog */}
-      <div className="catalog-section">
-        <div className="catalog-header">
-          <div>
-            <h1 className="catalog-title">
-              <span>Velvette Collection</span>
-              {pricingMode === 'challenger' ? (
-                <span style={{ fontSize: 13, background: '#FFF3E0', color: '#D97706', padding: '3px 10px', borderRadius: 20, border: '1px solid #FCD34D' }}>
-                  ⚡ Challenger (+₹50)
-                </span>
-              ) : (
-                <span style={{ fontSize: 13, background: '#FCE7F3', color: '#DB2777', padding: '3px 10px', borderRadius: 20, border: '1px solid #FBCFE8' }}>
-                  🎀 Normal Mode
-                </span>
-              )}
-            </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-              Tap any item to add to customer cart. Switch modes anytime.
-            </p>
-          </div>
+  const totalCartQty = cart.reduce((sum, i) => sum + i.quantity, 0);
 
-          {/* Search Box & Add Product Button */}
-          <div className="search-and-filters">
-            <div className="search-input-wrap">
-              <Search size={16} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search plushies, charms, apparel..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
+  return (
+    <div className="pos-layout-wrapper">
+      {/* Mobile View Switcher Tabs (<1024px) */}
+      <div className="mobile-pos-switcher">
+        <button
+          type="button"
+          className={`mobile-switch-tab ${mobileView === 'catalog' ? 'active' : ''}`}
+          onClick={() => setMobileView('catalog')}
+        >
+          <Package size={15} />
+          <span>Products ({filteredProducts.length})</span>
+        </button>
+        <button
+          type="button"
+          className={`mobile-switch-tab ${mobileView === 'cart' ? 'active' : ''}`}
+          onClick={() => setMobileView('cart')}
+        >
+          <ShoppingBag size={15} />
+          <span>Cart ({totalCartQty}) • ₹{grandTotal.toFixed(0)}</span>
+        </button>
+      </div>
+
+      <div className="pos-layout">
+        {/* LEFT: Product Catalog */}
+        <div className={`catalog-section ${mobileView === 'cart' ? 'mobile-hidden' : ''}`}>
+          <div className="catalog-header">
+            <div>
+              <h1 className="catalog-title">
+                <span>Velvette Collection</span>
+                {pricingMode === 'challenger' ? (
+                  <span style={{ fontSize: 13, background: '#FFF3E0', color: '#D97706', padding: '3px 10px', borderRadius: 20, border: '1px solid #FCD34D' }}>
+                    ⚡ Challenger (+₹50)
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 13, background: '#FCE7F3', color: '#DB2777', padding: '3px 10px', borderRadius: 20, border: '1px solid #FBCFE8' }}>
+                    🎀 Normal Mode
+                  </span>
+                )}
+              </h1>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+                Tap any item to add to customer cart. Switch modes anytime.
+              </p>
             </div>
 
-            <button
-              type="button"
-              className="btn-checkout"
-              style={{ width: 'auto', padding: '9px 18px', fontSize: 13, gap: 6, whiteSpace: 'nowrap' }}
-              onClick={() => {
-                setNewProdName('');
-                setNewProdPrice('');
-                setNewProdCost('');
-                setNewProdStock('50');
-                setNewProdDesc('');
-                setNewProdFile(null);
-                setNewProdPreview('');
-                setShowAddModal(true);
-              }}
-              title="Add a new product directly from this screen"
-            >
-              <Plus size={16} />
-              <span>Add Product</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Category Filter Chips */}
-        <div className="category-chips">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              type="button"
-              className={`chip-btn ${selectedCategory === cat ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Products Grid */}
-        <div className="products-grid">
-          {filteredProducts.length === 0 ? (
-            <div style={{
-              gridColumn: '1 / -1',
-              textAlign: 'center',
-              padding: '44px 20px',
-              background: '#FFFFFF',
-              borderRadius: '20px',
-              border: '2px dashed var(--border-soft)'
-            }}>
-              <div style={{
-                width: 52,
-                height: 52,
-                borderRadius: '50%',
-                background: 'var(--primary-pastel)',
-                color: 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 12px auto'
-              }}>
-                <Package size={26} />
+            {/* Search Box & Add Product Button */}
+            <div className="search-and-filters">
+              <div className="search-input-wrap">
+                <Search size={16} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search plushies, charms, apparel..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--text-main)' }}>
-                Catalog is Empty
-              </h3>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 16px 0' }}>
-                Add your own inventory products with photo and pricing.
-              </p>
+
               <button
                 type="button"
-                className="btn-add-product-screen"
-                style={{ margin: '0 auto' }}
+                className="btn-checkout"
+                style={{ width: 'auto', padding: '9px 18px', fontSize: 13, gap: 6, whiteSpace: 'nowrap' }}
                 onClick={() => {
                   setNewProdName('');
-                  setNewProdCategory('Apparel');
                   setNewProdPrice('');
                   setNewProdCost('');
                   setNewProdStock('50');
@@ -318,12 +275,61 @@ export default function PosBilling({
                   setNewProdPreview('');
                   setShowAddModal(true);
                 }}
+                title="Add a new product directly from this screen"
               >
                 <Plus size={16} />
-                <span>Add First Product</span>
+                <span>Add Product</span>
               </button>
             </div>
-          ) : (
+          </div>
+
+          {/* Category Filter Chips */}
+          <div className="category-chips">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                className={`chip-btn ${selectedCategory === cat ? 'active' : ''}`}
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Products Grid */}
+          <div className="products-grid">
+            {filteredProducts.length === 0 ? (
+              <div className="empty-catalog-card">
+                <div className="empty-catalog-icon-wrap">
+                  <Package size={28} />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 900, margin: '0 0 6px 0', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>
+                  Catalog is Empty
+                </h3>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px 0', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+                  Add your own inventory products with photo and pricing to start selling.
+                </p>
+                <button
+                  type="button"
+                  className="btn-add-product-screen"
+                  onClick={() => {
+                    setNewProdName('');
+                    setNewProdCat('Apparel');
+                    setNewProdPrice('');
+                    setNewProdCost('');
+                    setNewProdStock('50');
+                    setNewProdDesc('');
+                    setNewProdFile(null);
+                    setNewProdPreview('');
+                    setShowAddModal(true);
+                  }}
+                >
+                  <Plus size={16} />
+                  <span>Add First Product</span>
+                </button>
+              </div>
+            ) : (
             filteredProducts.map(product => {
               const displayPrice = getProductPrice(product.price);
               return (
@@ -371,7 +377,19 @@ export default function PosBilling({
       </div>
 
       {/* RIGHT: Cart & Customer Panel */}
-      <div className="cart-panel">
+      <div className={`cart-panel ${mobileView === 'catalog' ? 'mobile-hidden' : ''}`}>
+        {/* Mobile Back Button */}
+        <div className="mobile-back-to-catalog">
+          <button
+            type="button"
+            className="btn-back-catalog"
+            onClick={() => setMobileView('catalog')}
+          >
+            <ArrowLeft size={14} />
+            <span>← Back to Products</span>
+          </button>
+        </div>
+
         <div className="cart-header">
           <div className="cart-title">
             <span>Current Order</span>
@@ -631,11 +649,26 @@ export default function PosBilling({
           <ArrowRight size={18} />
         </button>
       </div>
+    </div>
+
+    {/* Mobile Floating Cart Summary Pill (Only visible on mobile catalog view) */}
+    {cart.length > 0 && mobileView === 'catalog' && (
+      <div className="mobile-floating-cart-bar" onClick={() => setMobileView('cart')}>
+        <div className="floating-cart-info">
+          <span className="floating-cart-count">{totalCartQty} Items in Cart</span>
+          <span className="floating-cart-total">₹{grandTotal.toFixed(2)}</span>
+        </div>
+        <button type="button" className="floating-cart-btn">
+          <span>View Cart & Pay</span>
+          <ArrowRight size={15} />
+        </button>
+      </div>
+    )}
 
       {/* Quick Add Product Modal from Screen */}
       {showAddModal && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: 520, padding: 26 }}>
+          <div className="modal-card" style={{ maxWidth: 520, padding: 24 }}>
             <button type="button" className="modal-close-btn" onClick={() => setShowAddModal(false)}>
               <X size={18} />
             </button>
@@ -664,7 +697,7 @@ export default function PosBilling({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="responsive-form-grid">
                 <div className="field-group">
                   <label>Category</label>
                   <select
@@ -697,7 +730,7 @@ export default function PosBilling({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="responsive-form-grid">
                 <div className="field-group">
                   <label>Selling Price (₹) *</label>
                   <input

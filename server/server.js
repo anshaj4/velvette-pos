@@ -349,6 +349,24 @@ app.post('/api/data', (req, res) => {
   res.json({ success: true, message: 'Data saved successfully' });
 });
 
+// Reset Sales & Revenue
+app.post('/api/reset-sales', async (req, res) => {
+  const db = loadDb();
+  db.invoices = [];
+  db.dailyClosings = [];
+  db.customers = [];
+  saveDb(db);
+  if (supabase) {
+    try {
+      await supabase.from('invoices').delete().neq('id', 'placeholder_never_match');
+      await supabase.from('daily_closings').delete().neq('id', 'placeholder_never_match');
+    } catch (e) {
+      console.warn('Supabase reset warning:', e.message);
+    }
+  }
+  return res.json({ success: true, message: 'All sales and revenue cleared successfully' });
+});
+
 // 4. Save Invoice & Update Customer History
 app.post('/api/invoices', async (req, res) => {
   const invoice = req.body;

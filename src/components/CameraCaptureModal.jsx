@@ -129,7 +129,7 @@ export default function CameraCaptureModal({
         <div style={{
           position: 'relative',
           width: '100%',
-          height: 320,
+          height: 'clamp(200px, 42vh, 320px)',
           background: '#190F16',
           borderRadius: 16,
           overflow: 'hidden',

@@ -323,31 +323,18 @@ export default function PurchaseBills({
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <div className="receipt-upload-actions">
                     <button
                       type="button"
+                      className="btn-snap-receipt"
                       onClick={() => setShowCameraModal(true)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        background: '#FFF0F6',
-                        border: '1.5px solid var(--border-strong)',
-                        padding: '9px 18px',
-                        borderRadius: 20,
-                        color: 'var(--primary)',
-                        fontWeight: 700,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        boxShadow: 'var(--shadow-sm)'
-                      }}
                     >
                       <Camera size={16} />
                       <span>Snap Receipt with Camera</span>
                     </button>
 
-                    <label htmlFor="receipt-file-input" style={{ cursor: 'pointer', display: 'inline-block' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FFFFFF', border: '1.5px solid var(--border-soft)', padding: '9px 18px', borderRadius: 20, color: 'var(--text-muted)', fontWeight: 600, fontSize: 13, boxShadow: 'var(--shadow-sm)' }}>
+                    <label htmlFor="receipt-file-input" style={{ cursor: 'pointer', margin: 0 }}>
+                      <div className="btn-upload-receipt-file">
                         <Upload size={15} />
                         <span>{selectedFile ? 'Change Receipt File' : 'Upload Receipt File'}</span>
                       </div>
@@ -394,7 +381,7 @@ export default function PurchaseBills({
 
             {/* Form with Manual Override */}
             <form onSubmit={handleSubmitBill} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="responsive-form-grid">
                 <div className="field-group">
                   <label>Total Bill Amount (₹) *</label>
                   <input
@@ -420,7 +407,7 @@ export default function PurchaseBills({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="responsive-form-grid">
                 <div className="field-group">
                   <label>Vendor / Supplier Name *</label>
                   <input

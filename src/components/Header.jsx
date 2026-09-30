@@ -32,8 +32,8 @@ export default function Header({
 
         {/* Header Right Cluster */}
         <div className="header-right-cluster">
-          {/* Mode Switcher */}
-          <div className="mode-toggle-card">
+          {/* Desktop Mode Switcher */}
+          <div className="mode-toggle-card desktop-only-flex">
             <button
               type="button"
               className={`mode-btn ${pricingMode === 'normal' ? 'active normal' : ''}`}
@@ -54,6 +54,17 @@ export default function Header({
             </button>
           </div>
 
+          {/* Mobile Compact Mode Toggle */}
+          <button
+            type="button"
+            className={`mode-toggle-mobile mobile-only-flex ${pricingMode === 'challenger' ? 'challenger' : 'normal'}`}
+            onClick={() => setPricingMode(pricingMode === 'normal' ? 'challenger' : 'normal')}
+            title="Tap to toggle Normal / Challenger mode"
+          >
+            {pricingMode === 'challenger' ? <Zap size={12} /> : <Sparkles size={12} />}
+            <span>{pricingMode === 'challenger' ? '+₹50' : 'Normal'}</span>
+          </button>
+
           {/* Today Revenue Pill */}
           <div className="badge-live-day" title="Today's total sales">
             <span className="badge-dot"></span>
@@ -67,8 +78,8 @@ export default function Header({
             onClick={onOpenCloseShop}
             title="End today's trading & calculate net profit"
           >
-            <Moon size={14} />
-            <span>Close Shop</span>
+            <Moon size={13} />
+            <span className="close-shop-text">Close Shop</span>
           </button>
 
           {/* Logout */}
@@ -79,7 +90,7 @@ export default function Header({
               onClick={onLogout}
               title="Logout"
             >
-              <LogOut size={15} />
+              <LogOut size={14} />
             </button>
           )}
         </div>

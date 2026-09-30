@@ -259,7 +259,7 @@ export default function ProductManagement({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="responsive-form-grid">
                 <div className="field-group">
                   <label>Category</label>
                   <select
@@ -292,7 +292,7 @@ export default function ProductManagement({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="responsive-form-grid">
                 <div className="field-group">
                   <label>Selling Price (Normal Mode ₹) *</label>
                   <input
