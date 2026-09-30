@@ -201,23 +201,13 @@ function saveDb(data) {
   }
 }
 
-// Convert Logo to base64 or public web link for email
-function getLogoBase64() {
-  try {
-    const smallLogo = path.join(rootDir, 'public', 'logo_email.png');
-    if (fs.existsSync(smallLogo)) {
-      const buffer = fs.readFileSync(smallLogo);
-      return `data:image/png;base64,${buffer.toString('base64')}`;
-    }
-    const logoPath = path.join(rootDir, 'public', 'logo.png');
-    if (fs.existsSync(logoPath)) {
-      const buffer = fs.readFileSync(logoPath);
-      return `data:image/png;base64,${buffer.toString('base64')}`;
-    }
-  } catch (e) {
-    console.error('Error reading logo for email:', e);
+// Get Public Logo URL for Emails (Gmail blocks data: base64 URIs)
+function getLogoUrl() {
+  if (process.env.STORE_LOGO_URL) {
+    return process.env.STORE_LOGO_URL;
   }
-  return 'https://raw.githubusercontent.com/anshaj4/velvette-pos/main/public/logo.png';
+  // High-speed CDN mirror for GitHub repository asset
+  return 'https://cdn.jsdelivr.net/gh/anshaj4/velvette-pos@main/public/logo_email.png';
 }
 
 // Generate Barbie Pink Invoice Email HTML template
@@ -227,7 +217,7 @@ function generateInvoiceEmailHtml(invoice) {
     timeStyle: 'short'
   });
 
-  const logoData = getLogoBase64();
+  const logoUrl = getLogoUrl();
   const paymentText = invoice.paymentMethod === 'Cash' ? 'Paid via Cash' : 'Paid via Google Pay';
 
   const itemsRows = (invoice.items || []).map(item => `
@@ -257,7 +247,12 @@ function generateInvoiceEmailHtml(invoice) {
               
               <!-- WHITE TOP BANNER WITH CENTERED LOGO -->
               <div style="background-color: #FFFFFF; padding: 26px 20px 20px; text-align: center; border-bottom: 3px solid #FB4692;">
-                <img src="${logoData}" alt="Velvette" style="max-height: 64px; max-width: 240px; height: auto; width: auto; display: block; margin: 0 auto;" />
+                <img 
+                  src="${logoUrl}" 
+                  alt="Velvette" 
+                  width="220" 
+                  style="max-height: 64px; max-width: 220px; width: auto; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
+                />
                 <p style="margin: 8px 0 0 0; color: #FB4692; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">
                   Customer Receipt #${invoice.invoiceNumber}
                 </p>
