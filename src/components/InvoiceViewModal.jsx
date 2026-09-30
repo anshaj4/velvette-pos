@@ -45,24 +45,15 @@ export default function InvoiceViewModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-card" style={{ maxWidth: 660, padding: 0, overflow: 'hidden', background: '#FB4692' }}>
-        <button
-          type="button"
-          className="modal-close-btn btn-print-hide"
-          onClick={onClose}
-          style={{ top: 12, right: 12, background: 'rgba(255,255,255,0.85)' }}
-        >
-          <X size={18} />
-        </button>
-
+      <div className="modal-card" style={{ maxWidth: 660, padding: 0, overflow: 'hidden', background: '#FB4692', position: 'relative' }}>
         {/* Action Toolbar on Top (Hidden during print) */}
-        <div className="btn-print-hide" style={{ padding: '12px 20px', background: 'rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700 }}>
+        <div className="btn-print-hide" style={{ padding: '12px 18px', background: 'rgba(0,0,0,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800 }}>
             <Sparkles size={16} />
-            <span>Invoice #{invoice.invoiceNumber} Generated!</span>
+            <span>Invoice #{invoice.invoiceNumber}</span>
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               type="button"
               onClick={handlePrint}
@@ -104,9 +95,32 @@ export default function InvoiceViewModal({
                 }}
               >
                 <Mail size={14} />
-                <span>{resending ? 'Sending...' : 'Resend Email'}</span>
+                <span>{resending ? 'Sending...' : 'Resend'}</span>
               </button>
             )}
+
+            {/* Dedicated Non-overlapping Close Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                background: 'rgba(255,255,255,0.9)',
+                color: '#1C0F17',
+                border: 'none',
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                marginLeft: 4,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+              }}
+              title="Close Invoice"
+            >
+              <X size={16} />
+            </button>
           </div>
         </div>
 

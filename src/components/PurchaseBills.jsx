@@ -66,11 +66,19 @@ export default function PurchaseBills({
 
     try {
       const res = await ocrPurchaseBill(file);
-      if (res.receiptUrl) {
+      if (res && res.receiptUrl) {
         setReceiptUrl(res.receiptUrl);
+      } else {
+        // Fallback upload file directly
+        try {
+          const directUrl = await uploadFile(file, true);
+          if (directUrl) setReceiptUrl(directUrl);
+        } catch (upErr) {
+          console.warn('Fallback direct upload warning:', upErr);
+        }
       }
 
-      if (res.success) {
+      if (res && res.success) {
         let extractedCount = 0;
 
         // Auto extract Total
@@ -106,10 +114,10 @@ export default function PurchaseBills({
           extractedCount
         });
       } else {
-        console.warn('OCR fallback:', res.error);
+        console.warn('OCR notice:', res?.error || 'Manual entry active');
       }
     } catch (err) {
-      console.error('OCR Error:', err);
+      console.warn('OCR processing notice:', err.message);
     } finally {
       setIsScanningOcr(false);
     }

@@ -137,9 +137,17 @@ export default function PosBilling({
     return (subtotal * pct) / 100;
   }, [subtotal, discountPercent]);
 
+  const [custValidationError, setCustValidationError] = useState('');
+
   const grandTotal = Math.max(0, subtotal - discountAmount);
 
   const handleCheckoutClick = () => {
+    if (!customerData.name?.trim() || !customerData.phone?.trim()) {
+      setCustValidationError('Customer Name and Phone Number are required before checkout.');
+      return;
+    }
+    setCustValidationError('');
+
     // Generate customer ID if missing
     const finalCustData = {
       ...customerData,
@@ -267,48 +275,98 @@ export default function PosBilling({
 
         {/* Products Grid */}
         <div className="products-grid">
-          {filteredProducts.map(product => {
-            const displayPrice = getProductPrice(product.price);
-            return (
-              <div key={product.id} className="product-card">
-                <div className="product-image-container">
-                  <img
-                    src={product.image || '/logo.png'}
-                    alt={product.name}
-                    className="product-img"
-                    onError={(e) => { e.target.src = '/logo.png'; }}
-                  />
-                  {product.stock && (
-                    <span className="product-stock-tag">
-                      {product.stock} left
-                    </span>
-                  )}
-                </div>
-
-                <div className="product-info">
-                  <span className="product-category-name">{product.category || 'Velvette'}</span>
-                  <h3 className="product-title" title={product.name}>{product.name}</h3>
-
-                  <div className="product-pricing-row">
-                    <div className="price-box">
-                      <span className={`current-price ${pricingMode === 'challenger' ? 'challenger-active' : ''}`}>
-                        ₹{displayPrice}
+          {filteredProducts.length === 0 ? (
+            <div style={{
+              gridColumn: '1 / -1',
+              textAlign: 'center',
+              padding: '44px 20px',
+              background: '#FFFFFF',
+              borderRadius: '20px',
+              border: '2px dashed var(--border-soft)'
+            }}>
+              <div style={{
+                width: 52,
+                height: 52,
+                borderRadius: '50%',
+                background: 'var(--primary-pastel)',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px auto'
+              }}>
+                <Package size={26} />
+              </div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--text-main)' }}>
+                Catalog is Empty
+              </h3>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 16px 0' }}>
+                Add your own inventory products with photo and pricing.
+              </p>
+              <button
+                type="button"
+                className="btn-add-product-screen"
+                style={{ margin: '0 auto' }}
+                onClick={() => {
+                  setNewProdName('');
+                  setNewProdCategory('Apparel');
+                  setNewProdPrice('');
+                  setNewProdCost('');
+                  setNewProdStock('50');
+                  setNewProdDesc('');
+                  setNewProdFile(null);
+                  setNewProdPreview('');
+                  setShowAddModal(true);
+                }}
+              >
+                <Plus size={16} />
+                <span>Add First Product</span>
+              </button>
+            </div>
+          ) : (
+            filteredProducts.map(product => {
+              const displayPrice = getProductPrice(product.price);
+              return (
+                <div key={product.id} className="product-card">
+                  <div className="product-image-container">
+                    <img
+                      src={product.image || '/logo.png'}
+                      alt={product.name}
+                      className="product-img"
+                      onError={(e) => { e.target.src = '/logo.png'; }}
+                    />
+                    {product.stock && (
+                      <span className="product-stock-tag">
+                        {product.stock} left
                       </span>
-                    </div>
+                    )}
+                  </div>
 
-                    <button
-                      type="button"
-                      className="btn-add-cart"
-                      onClick={() => handleAddToCart(product)}
-                      title="Add to Cart"
-                    >
-                      <Plus size={18} />
-                    </button>
+                  <div className="product-info">
+                    <span className="product-category-name">{product.category || 'Velvette'}</span>
+                    <h3 className="product-title" title={product.name}>{product.name}</h3>
+
+                    <div className="product-pricing-row">
+                      <div className="price-box">
+                        <span className={`current-price ${pricingMode === 'challenger' ? 'challenger-active' : ''}`}>
+                          ₹{displayPrice}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-add-cart"
+                        onClick={() => handleAddToCart(product)}
+                        title="Add to Cart"
+                      >
+                        <Plus size={18} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -389,9 +447,18 @@ export default function PosBilling({
         </div>
 
         {/* Customer Details Form (Before Payment) */}
-        <div className="customer-form-box">
+        <div 
+          className="customer-form-box" 
+          id="customer-section-box"
+          style={{
+            border: custValidationError ? '1.5px solid #FF3B5C' : undefined,
+            transition: 'border 0.2s ease'
+          }}
+        >
           <div className="customer-form-title">
-            <span>Customer Info</span>
+            <span style={{ color: custValidationError ? '#FF3B5C' : 'inherit' }}>
+              Customer Information *
+            </span>
             {customerData.isReturning && (
               <span className="autofill-badge">
                 <UserCheck size={11} style={{ display: 'inline', marginRight: 3 }} />
@@ -400,26 +467,60 @@ export default function PosBilling({
             )}
           </div>
 
+          {custValidationError && (
+            <div style={{
+              background: '#FFEBEF',
+              color: '#FF3B5C',
+              padding: '8px 12px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              marginBottom: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <AlertCircle size={14} />
+              <span>{custValidationError}</span>
+            </div>
+          )}
+
           <div className="customer-inputs-grid">
             {/* Phone (Triggers autofill) */}
             <div className="field-group input-full">
-              <label>Phone Number (Enter for Auto-fill)</label>
+              <label style={{ color: custValidationError && !customerData.phone ? '#FF3B5C' : 'inherit' }}>
+                Phone Number * (Auto-fill returning guest)
+              </label>
               <input
                 type="tel"
                 placeholder="e.g. 9876543210"
                 value={customerData.phone}
-                onChange={e => handlePhoneChange(e.target.value)}
+                onChange={e => {
+                  setCustValidationError('');
+                  handlePhoneChange(e.target.value);
+                }}
+                style={{
+                  borderColor: custValidationError && !customerData.phone ? '#FF3B5C' : undefined
+                }}
               />
             </div>
 
             {/* Name */}
             <div className="field-group">
-              <label>Customer Name</label>
+              <label style={{ color: custValidationError && !customerData.name ? '#FF3B5C' : 'inherit' }}>
+                Customer Name *
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Priya Sharma"
                 value={customerData.name}
-                onChange={e => setCustomerData({ ...customerData, name: e.target.value })}
+                onChange={e => {
+                  setCustValidationError('');
+                  setCustomerData({ ...customerData, name: e.target.value });
+                }}
+                style={{
+                  borderColor: custValidationError && !customerData.name ? '#FF3B5C' : undefined
+                }}
               />
             </div>
 

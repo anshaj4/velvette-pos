@@ -93,12 +93,28 @@ export async function uploadFile(file, isBill = false) {
 export async function ocrPurchaseBill(file) {
   const formData = new FormData();
   formData.append('receipt', file);
-  const res = await fetch(`${BASE_URL}/api/ocr-bill`, {
-    method: 'POST',
-    body: formData
-  });
-  if (!res.ok) throw new Error('OCR process failed');
-  return await res.json();
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/ocr-bill`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) throw new Error('OCR response status ' + res.status);
+    return await res.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.warn('OCR request error or timeout:', err.message);
+    return {
+      success: false,
+      fallback: true,
+      error: err.name === 'AbortError' ? 'Scan timed out' : err.message
+    };
+  }
 }
 
 export async function saveProduct(product, action = 'create') {

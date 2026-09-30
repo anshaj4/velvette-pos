@@ -334,9 +334,27 @@ export default function CheckoutModal({
           </div>
         </div>
 
-        {/* Primary Action Buttons: Prompt or Direct Accept */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {/* Button: Accept Cash */}
+        {/* Dedicated Action Button for Active Tab */}
+        {activeTab === 'gpay' ? (
+          <button
+            type="button"
+            className="btn-confirm-payment"
+            onClick={() => handleConfirmPayment('Google Pay')}
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="animate-spin" size={18} />
+                <span>Saving & Dispatching Email...</span>
+              </>
+            ) : (
+              <>
+                <Smartphone size={18} />
+                <span>Payment Received via Google Pay</span>
+              </>
+            )}
+          </button>
+        ) : (
           <button
             type="button"
             className="btn-confirm-payment"
@@ -344,194 +362,21 @@ export default function CheckoutModal({
             disabled={isProcessing}
             style={{
               background: '#0C8A53',
-              boxShadow: '0 8px 24px rgba(12, 138, 83, 0.3)',
-              margin: 0
+              boxShadow: '0 8px 24px rgba(12, 138, 83, 0.3)'
             }}
           >
             {isProcessing ? (
-              <Loader2 className="animate-spin" size={16} />
+              <>
+                <Loader2 className="animate-spin" size={18} />
+                <span>Saving & Generating Invoice...</span>
+              </>
             ) : (
               <>
-                <Banknote size={16} />
-                <span>Paid Cash</span>
+                <Banknote size={18} />
+                <span>Payment Received in Cash</span>
               </>
             )}
           </button>
-
-          {/* Button: Accept GPay */}
-          <button
-            type="button"
-            className="btn-confirm-payment"
-            onClick={() => handleConfirmPayment('Google Pay')}
-            disabled={isProcessing}
-            style={{ margin: 0 }}
-          >
-            {isProcessing ? (
-              <Loader2 className="animate-spin" size={16} />
-            ) : (
-              <>
-                <Smartphone size={16} />
-                <span>Paid GPay</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Unified "Payment Received" button that triggers option prompt modal if cashier clicks it */}
-        <button
-          type="button"
-          onClick={() => setShowMethodModal(true)}
-          disabled={isProcessing}
-          style={{
-            marginTop: 10,
-            width: '100%',
-            background: 'transparent',
-            border: '1.5px dashed var(--primary)',
-            color: 'var(--primary)',
-            padding: '10px 14px',
-            borderRadius: 14,
-            fontSize: 13,
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6
-          }}
-        >
-          <CheckCircle2 size={16} />
-          <span>Payment Received • Choose Cash or GPay</span>
-        </button>
-
-        {/* POPUP PROMPT MODAL WHEN "PAYMENT RECEIVED" IS CLICKED */}
-        {showMethodModal && (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(28, 15, 23, 0.92)',
-            backdropFilter: 'blur(4px)',
-            borderRadius: 24,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-            zIndex: 50
-          }}>
-            <div style={{
-              background: '#FFFFFF',
-              borderRadius: 20,
-              padding: '24px 20px',
-              width: '100%',
-              maxWidth: 380,
-              textAlign: 'center',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
-              border: '2px solid #FB4692'
-            }}>
-              <div style={{
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                background: '#FFF0F6',
-                color: '#FB4692',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 10px auto'
-              }}>
-                <Sparkles size={22} />
-              </div>
-
-              <h3 style={{ margin: '0 0 6px 0', fontSize: 20, fontWeight: 900, color: '#1C0F17' }}>
-                Payment Received
-              </h3>
-              <p style={{ margin: '0 0 18px 0', fontSize: 13, color: '#666' }}>
-                How did the customer pay <strong>₹{totalAmount.toFixed(2)}</strong>?
-              </p>
-
-              {/* Option 1: Cash */}
-              <button
-                type="button"
-                onClick={() => handleConfirmPayment('Cash')}
-                disabled={isProcessing}
-                style={{
-                  width: '100%',
-                  padding: '14px 16px',
-                  borderRadius: 14,
-                  border: '2px solid #68D391',
-                  background: '#F0FFF4',
-                  color: '#22543D',
-                  fontWeight: 800,
-                  fontSize: 15,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 10,
-                  transition: 'transform 0.15s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ background: '#276749', color: '#FFF', padding: 8, borderRadius: 10 }}>
-                    <Banknote size={20} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800 }}>Accept via Cash</div>
-                    <div style={{ fontSize: 11, color: '#2F855A', fontWeight: 600 }}>Paper currency at counter</div>
-                  </div>
-                </div>
-                <ArrowRight size={18} color="#276749" />
-              </button>
-
-              {/* Option 2: Google Pay */}
-              <button
-                type="button"
-                onClick={() => handleConfirmPayment('Google Pay')}
-                disabled={isProcessing}
-                style={{
-                  width: '100%',
-                  padding: '14px 16px',
-                  borderRadius: 14,
-                  border: '2px solid #FB4692',
-                  background: '#FFF0F6',
-                  color: '#FB4692',
-                  fontWeight: 800,
-                  fontSize: 15,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 14,
-                  transition: 'transform 0.15s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ background: '#FB4692', color: '#FFF', padding: 8, borderRadius: 10 }}>
-                    <Smartphone size={20} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800 }}>Accept via Google Pay</div>
-                    <div style={{ fontSize: 11, color: '#DB2777', fontWeight: 600 }}>UPI / QR code transfer</div>
-                  </div>
-                </div>
-                <ArrowRight size={18} color="#FB4692" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowMethodModal(false)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#888',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
         )}
 
       </div>

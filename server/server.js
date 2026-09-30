@@ -71,68 +71,7 @@ const DB_FILE = process.env.VERCEL
   : BUNDLED_DB_FILE;
 
 // Initial Seed Products
-const INITIAL_PRODUCTS = [
-  {
-    id: 'prod_1',
-    name: 'Velvette Signature Pink Plushie Bear',
-    category: 'Plushies',
-    price: 499,
-    costPrice: 220,
-    image: '/public/logo.png',
-    stock: 50,
-    description: 'Iconic ultra-soft plush bear with velvety feel and heart detail'
-  },
-  {
-    id: 'prod_2',
-    name: 'Velvette Twin Gummy Bears Charm',
-    category: 'Accessories',
-    price: 249,
-    costPrice: 95,
-    image: '/public/logo.png',
-    stock: 75,
-    description: 'Double pink gummy bear keychain with ribbon bow'
-  },
-  {
-    id: 'prod_3',
-    name: 'Barbie Velvet Bow Scrunchie Set',
-    category: 'Accessories',
-    price: 199,
-    costPrice: 70,
-    image: '/public/logo.png',
-    stock: 60,
-    description: 'Pack of 3 premium silky velvet hair scrunchies'
-  },
-  {
-    id: 'prod_4',
-    name: 'Velvette Candy Pink Cropped Hoodie',
-    category: 'Apparel',
-    price: 1299,
-    costPrice: 650,
-    image: '/public/logo.png',
-    stock: 30,
-    description: 'Heavyweight cozy fleece hoodie with embossed 3D logo'
-  },
-  {
-    id: 'prod_5',
-    name: 'Velvette Bubble Tea Tumbler (Pink)',
-    category: 'Lifestyle',
-    price: 399,
-    costPrice: 160,
-    image: '/public/logo.png',
-    stock: 40,
-    description: 'Insulated double-wall tumbler with reusable glass straw'
-  },
-  {
-    id: 'prod_6',
-    name: 'Velvette Sweetheart Tote Bag',
-    category: 'Apparel',
-    price: 449,
-    costPrice: 180,
-    image: '/public/logo.png',
-    stock: 45,
-    description: 'Canvas tote with pink velvet lettering and bear print'
-  }
-];
+const INITIAL_PRODUCTS = [];
 
 // In-memory cache for serverless environments
 let inMemoryDb = null;
@@ -542,7 +481,7 @@ app.post('/api/upload-bill', upload.single('receipt'), (req, res) => {
   res.json({ success: true, receiptUrl });
 });
 
-// 9b. OCR Purchase Bill Endpoint (Auto extracts Total, Vendor, Date, Bill Number)
+// 9b. OCR Purchase Bill Endpoint (Auto extracts Total, Vendor, Date, Bill Number with 6s timeout)
 app.post('/api/ocr-bill', upload.single('receipt'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, error: 'No receipt file provided' });
@@ -553,8 +492,13 @@ app.post('/api/ocr-bill', upload.single('receipt'), async (req, res) => {
 
   try {
     console.log('Running OCR on receipt:', filePath);
-    const { data: { text } } = await Tesseract.recognize(filePath, 'eng');
-    console.log('OCR text extracted:', text.slice(0, 100));
+    const ocrPromise = Tesseract.recognize(filePath, 'eng');
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('OCR scan timed out. Please enter amount manually.')), 6000)
+    );
+
+    const { data: { text } } = await Promise.race([ocrPromise, timeoutPromise]);
+    console.log('OCR text extracted successfully');
 
     const parsed = parseReceiptText(text);
 
@@ -568,7 +512,7 @@ app.post('/api/ocr-bill', upload.single('receipt'), async (req, res) => {
       extractedVendor: parsed.vendor
     });
   } catch (err) {
-    console.error('OCR processing error:', err);
+    console.warn('OCR processing notice (falling back to manual entry):', err.message);
     return res.json({
       success: false,
       receiptUrl,
