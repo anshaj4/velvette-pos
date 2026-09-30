@@ -11,8 +11,8 @@ export default function LoginModal({
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const correctUser = settings.username || 'admin';
-    const correctPass = settings.password || 'velvette123';
+    const correctUser = settings.username || 'admin@velvette';
+    const correctPass = settings.password || 'pass@velvette';
 
     if (username.trim() === correctUser && password === correctPass) {
       localStorage.setItem('velvette_auth_session', JSON.stringify({
@@ -21,7 +21,7 @@ export default function LoginModal({
       }));
       onLoginSuccess({ username: correctUser });
     } else {
-      setErrorMsg('Invalid username or password. Default is admin / velvette123');
+      setErrorMsg('Invalid username or password.');
     }
   };
 

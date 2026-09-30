@@ -33,18 +33,25 @@ const DEFAULT_UPI_ID = process.env.DEFAULT_UPI_ID || 'anshajshaji3-2@okicici';
 // Initialize Supabase Client
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY || 'dummy_key');
 
+// Configure Upload Paths (support Vercel read-only filesystem with /tmp)
+const baseUploadDir = process.env.VERCEL
+  ? path.join('/tmp', 'uploads')
+  : path.join(rootDir, 'uploads');
+
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
-app.use('/uploads', express.static(path.join(rootDir, 'uploads')));
+app.use('/uploads', express.static(baseUploadDir));
 app.use('/public', express.static(path.join(rootDir, 'public')));
 
 // Configure Multer for Uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const isBill = req.path.includes('bill');
-    const folder = isBill ? path.join(rootDir, 'uploads', 'bills') : path.join(rootDir, 'uploads', 'products');
+    const folder = isBill ? path.join(baseUploadDir, 'bills') : path.join(baseUploadDir, 'products');
     if (!fs.existsSync(folder)) {
-      fs.mkdirSync(folder, { recursive: true });
+      try {
+        fs.mkdirSync(folder, { recursive: true });
+      } catch (e) {}
     }
     cb(null, folder);
   },
@@ -57,8 +64,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Database file path
-const DB_FILE = path.join(__dirname, 'data', 'velvette_db.json');
+// Database file path (support Vercel read-only filesystem)
+const BUNDLED_DB_FILE = path.join(__dirname, 'data', 'velvette_db.json');
+const DB_FILE = process.env.VERCEL
+  ? path.join('/tmp', 'velvette_db.json')
+  : BUNDLED_DB_FILE;
 
 // Initial Seed Products
 const INITIAL_PRODUCTS = [
@@ -124,10 +134,22 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
+// In-memory cache for serverless environments
+let inMemoryDb = null;
+
 // Helper to load DB
 function loadDb() {
+  if (inMemoryDb) return inMemoryDb;
   try {
     if (!fs.existsSync(DB_FILE)) {
+      if (fs.existsSync(BUNDLED_DB_FILE)) {
+        const bundled = JSON.parse(fs.readFileSync(BUNDLED_DB_FILE, 'utf-8'));
+        inMemoryDb = bundled;
+        try {
+          fs.writeFileSync(DB_FILE, JSON.stringify(bundled, null, 2));
+        } catch (e) {}
+        return inMemoryDb;
+      }
       const initialDb = {
         products: INITIAL_PRODUCTS,
         customers: [
@@ -146,31 +168,36 @@ function loadDb() {
         dailyClosings: [],
         purchaseBills: [],
         settings: {
-          username: 'admin',
-          password: 'velvette123',
+          username: 'admin@velvette',
+          password: 'pass@velvette',
           upiId: DEFAULT_UPI_ID,
           challengerExtra: 50,
           storeName: 'Velvette Store',
           resendFrom: 'Velvette <onboarding@resend.dev>'
         }
       };
-      fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2));
+      try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2));
+      } catch (e) {}
+      inMemoryDb = initialDb;
       return initialDb;
     }
     const data = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(data);
+    inMemoryDb = JSON.parse(data);
+    return inMemoryDb;
   } catch (err) {
     console.error('Error loading DB:', err);
-    return { products: INITIAL_PRODUCTS, customers: [], invoices: [], dailyClosings: [], purchaseBills: [], settings: {} };
+    return inMemoryDb || { products: INITIAL_PRODUCTS, customers: [], invoices: [], dailyClosings: [], purchaseBills: [], settings: {} };
   }
 }
 
 // Helper to save DB
 function saveDb(data) {
+  inMemoryDb = data;
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
   } catch (err) {
-    console.error('Error saving DB:', err);
+    console.warn('Filesystem write notice (data preserved in memory & Supabase):', err.message);
   }
 }
 
@@ -550,8 +577,14 @@ app.get('/api/supabase-status', async (req, res) => {
   }
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`🌸 Velvette POS Server running on http://localhost:${PORT}`);
-  loadDb(); // Ensure db initialized
-});
+// Start Server when run directly
+if (process.env.VERCEL !== '1' && process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`🌸 Velvette POS Server running on http://localhost:${PORT}`);
+    loadDb(); // Ensure db initialized
+  });
+} else {
+  loadDb();
+}
+
+export default app;

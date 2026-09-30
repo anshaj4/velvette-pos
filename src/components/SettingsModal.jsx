@@ -75,8 +75,8 @@ export default function SettingsModal({
 }) {
   const [supabaseStatus, setSupabaseStatus] = useState({ checking: true });
   const [copiedSql, setCopiedSql] = useState(false);
-  const [newUsername, setNewUsername] = useState(settings.username || 'admin');
-  const [newPassword, setNewPassword] = useState(settings.password || 'velvette123');
+  const [newUsername, setNewUsername] = useState(settings.username || 'admin@velvette');
+  const [newPassword, setNewPassword] = useState(settings.password || 'pass@velvette');
   const [savedNotice, setSavedNotice] = useState(false);
 
   const checkStatus = async () => {

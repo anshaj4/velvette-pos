@@ -31,8 +31,8 @@ export default function App() {
     dailyClosings: [],
     purchaseBills: [],
     settings: {
-      username: 'admin',
-      password: 'velvette123',
+      username: 'admin@velvette',
+      password: 'pass@velvette',
       upiId: 'anshajshaji3-2@okicici',
       challengerExtra: 50
     }
