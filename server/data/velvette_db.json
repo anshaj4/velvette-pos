@@ -1,0 +1,205 @@
+{
+  "products": [
+    {
+      "id": "prod_1",
+      "name": "Velvette Signature Pink Plushie Bear",
+      "category": "Plushies",
+      "price": 499,
+      "costPrice": 220,
+      "image": "/public/logo.png",
+      "stock": 50,
+      "description": "Iconic ultra-soft plush bear with velvety feel and heart detail"
+    },
+    {
+      "id": "prod_2",
+      "name": "Velvette Twin Gummy Bears Charm",
+      "category": "Accessories",
+      "price": 249,
+      "costPrice": 95,
+      "image": "/public/logo.png",
+      "stock": 75,
+      "description": "Double pink gummy bear keychain with ribbon bow"
+    },
+    {
+      "id": "prod_3",
+      "name": "Barbie Velvet Bow Scrunchie Set",
+      "category": "Accessories",
+      "price": 199,
+      "costPrice": 70,
+      "image": "/public/logo.png",
+      "stock": 60,
+      "description": "Pack of 3 premium silky velvet hair scrunchies"
+    },
+    {
+      "id": "prod_4",
+      "name": "Velvette Candy Pink Cropped Hoodie",
+      "category": "Apparel",
+      "price": 1299,
+      "costPrice": 650,
+      "image": "/public/logo.png",
+      "stock": 30,
+      "description": "Heavyweight cozy fleece hoodie with embossed 3D logo"
+    },
+    {
+      "id": "prod_5",
+      "name": "Velvette Bubble Tea Tumbler (Pink)",
+      "category": "Lifestyle",
+      "price": 399,
+      "costPrice": 160,
+      "image": "/public/logo.png",
+      "stock": 40,
+      "description": "Insulated double-wall tumbler with reusable glass straw"
+    },
+    {
+      "id": "prod_6",
+      "name": "Velvette Sweetheart Tote Bag",
+      "category": "Apparel",
+      "price": 449,
+      "costPrice": 180,
+      "image": "/public/logo.png",
+      "stock": 45,
+      "description": "Canvas tote with pink velvet lettering and bear print"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust_1",
+      "customerId": "VEL-1001",
+      "name": "Priya Sharma",
+      "phone": "9876543210",
+      "email": "priya.test@velvette.in",
+      "totalVisits": 1,
+      "totalSpent": 499,
+      "createdAt": "2026-09-30T17:02:36.248Z"
+    },
+    {
+      "id": "cust_1790787951519",
+      "customerId": "VEL-9999",
+      "name": "Rhea Sen",
+      "phone": "9811223344",
+      "email": "rhea@example.com",
+      "totalVisits": 1,
+      "totalSpent": 1122.3,
+      "createdAt": "2026-09-30T17:05:51.519Z",
+      "lastVisit": "2026-09-30T17:05:51.519Z"
+    },
+    {
+      "id": "cust_1790788458572",
+      "customerId": "VEL-6258",
+      "name": "Anshaj Shaji",
+      "phone": "9778052356",
+      "email": "anshajshaji3@gmail.com",
+      "totalVisits": 1,
+      "totalSpent": 199,
+      "createdAt": "2026-09-30T17:14:18.572Z",
+      "lastVisit": "2026-09-30T17:14:18.572Z"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "inv_1790788458547",
+      "invoiceNumber": "VEL-458547",
+      "dayId": "2026-09-30",
+      "createdAt": "2026-09-30T17:14:18.547Z",
+      "customer": {
+        "name": "Anshaj Shaji",
+        "phone": "9778052356",
+        "email": "anshajshaji3@gmail.com",
+        "customerId": "VEL-6258"
+      },
+      "items": [
+        {
+          "id": "prod_3",
+          "name": "Barbie Velvet Bow Scrunchie Set",
+          "category": "Accessories",
+          "price": 199,
+          "costPrice": 70,
+          "quantity": 1
+        }
+      ],
+      "subtotal": 199,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "total": 199,
+      "mode": "normal",
+      "paymentMethod": "Google Pay (UPI)",
+      "upiId": "anshajshaji3-2@okicici",
+      "status": "PAID"
+    },
+    {
+      "id": "inv_1790787951314",
+      "invoiceNumber": "VEL-TEST01",
+      "dayId": "2026-09-30",
+      "createdAt": "2026-09-30T17:05:51.315Z",
+      "customer": {
+        "name": "Rhea Sen",
+        "phone": "9811223344",
+        "email": "rhea@example.com",
+        "customerId": "VEL-9999"
+      },
+      "items": [
+        {
+          "id": "prod_1",
+          "name": "Velvette Signature Pink Plushie Bear",
+          "price": 499,
+          "costPrice": 220,
+          "quantity": 2
+        },
+        {
+          "id": "prod_2",
+          "name": "Velvette Twin Gummy Bears Charm",
+          "price": 249,
+          "costPrice": 95,
+          "quantity": 1
+        }
+      ],
+      "subtotal": 1247,
+      "discountPercent": 10,
+      "discountAmount": 124.7,
+      "total": 1122.3,
+      "mode": "normal",
+      "paymentMethod": "Google Pay (UPI)",
+      "upiId": "anshajshaji3-2@okicici",
+      "status": "PAID"
+    }
+  ],
+  "dailyClosings": [
+    {
+      "dayId": "2026-09-30",
+      "closedAt": "2026-09-30T17:24:51.814Z",
+      "closedBy": "admin",
+      "totalRevenue": 1321.3,
+      "totalCogs": 605,
+      "grossProfit": 716.3,
+      "miscExpenses": 500,
+      "miscNotes": "",
+      "netProfit": 216.29999999999995,
+      "profitMargin": "16.4",
+      "totalInvoices": 2,
+      "mostSellingProduct": {
+        "id": "prod_1",
+        "name": "Velvette Signature Pink Plushie Bear",
+        "qty": 2,
+        "revenue": 998,
+        "profit": 558
+      },
+      "mostProfitableProduct": {
+        "id": "prod_1",
+        "name": "Velvette Signature Pink Plushie Bear",
+        "qty": 2,
+        "revenue": 998,
+        "profit": 558
+      },
+      "status": "closed"
+    }
+  ],
+  "purchaseBills": [],
+  "settings": {
+    "username": "admin",
+    "password": "velvette123",
+    "upiId": "anshajshaji3-2@okicici",
+    "challengerExtra": 50,
+    "storeName": "Velvette Store",
+    "resendFrom": "Velvette <onboarding@resend.dev>"
+  }
+}
