@@ -17,7 +17,7 @@ export default function Header({
       {pricingMode === 'challenger' && (
         <div className="challenger-alert-bar">
           <Zap size={14} fill="#FFFFFF" />
-          <span>CHALLENGER MODE ACTIVE: +₹50 applied to all items</span>
+          <span>SHHHHHH</span>
           <Zap size={14} fill="#FFFFFF" />
         </div>
       )}
@@ -50,7 +50,7 @@ export default function Header({
               title="Adds ₹50 to every product"
             >
               <Zap size={13} />
-              <span>Challenger (+₹50)</span>
+              <span>Challenger</span>
             </button>
           </div>
 
