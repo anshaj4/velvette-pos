@@ -1,3 +1,5 @@
+import { compressImageToDataUrl } from '../utils/imageHelper';
+
 // Velvette Frontend API Client
 
 const BASE_URL = ''; // Relative path handled by Vite proxy or backend
@@ -6,7 +8,13 @@ export async function fetchStoreData() {
   try {
     const res = await fetch(`${BASE_URL}/api/data`);
     if (!res.ok) throw new Error('Failed to fetch data');
-    return await res.json();
+    const data = await res.json();
+    if (data) {
+      try {
+        localStorage.setItem('velvette_offline_db', JSON.stringify(data));
+      } catch (e) {}
+    }
+    return data;
   } catch (err) {
     console.error('Error fetching store data:', err);
     // Fallback to localStorage if server isn't reachable
@@ -77,17 +85,35 @@ export async function savePurchaseBill(billData) {
 }
 
 export async function uploadFile(file, isBill = false) {
-  const formData = new FormData();
-  formData.append(isBill ? 'receipt' : 'file', file);
-  const endpoint = isBill ? '/api/upload-bill' : '/api/upload';
+  // 1. Instantly compress and convert to lightweight Data URL (persists without 404s)
+  let dataUrl = null;
+  try {
+    dataUrl = await compressImageToDataUrl(file, isBill ? 1000 : 600, 0.85);
+  } catch (err) {
+    console.warn('Local compression notice:', err);
+  }
 
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    method: 'POST',
-    body: formData
-  });
-  if (!res.ok) throw new Error('File upload failed');
-  const data = await res.json();
-  return isBill ? data.receiptUrl : data.url;
+  // 2. Also send to server upload endpoint
+  try {
+    const formData = new FormData();
+    formData.append(isBill ? 'receipt' : 'file', file);
+    const endpoint = isBill ? '/api/upload-bill' : '/api/upload';
+
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // If we have a dataUrl, prefer that so it never 404s on ephemeral Vercel containers
+      return dataUrl || (isBill ? data.receiptUrl : (data.dataUrl || data.url));
+    }
+  } catch (err) {
+    console.warn('Server upload notice, using persistent data URL:', err);
+  }
+
+  return dataUrl || '/logo.png';
 }
 
 export async function ocrPurchaseBill(file) {
@@ -124,7 +150,19 @@ export async function saveProduct(product, action = 'create') {
     body: JSON.stringify({ product, action })
   });
   if (!res.ok) throw new Error('Failed to save product');
-  return await res.json();
+  const result = await res.json();
+  
+  // Sync to offline cache
+  try {
+    const local = localStorage.getItem('velvette_offline_db');
+    if (local) {
+      const parsed = JSON.parse(local);
+      parsed.products = result.products;
+      localStorage.setItem('velvette_offline_db', JSON.stringify(parsed));
+    }
+  } catch (e) {}
+
+  return result;
 }
 
 export async function checkSupabaseStatus() {

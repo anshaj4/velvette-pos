@@ -1,7 +1,152 @@
 {
-  "products": [],
-  "customers": [],
-  "invoices": [],
+  "products": [
+    {
+      "id": "prod_1790921333177",
+      "name": "Fluffy Keychain",
+      "category": "Accessories",
+      "price": 99,
+      "costPrice": 50,
+      "stock": 2,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:08:53.394Z"
+    },
+    {
+      "id": "prod_1790921521344",
+      "name": "Hello kitty",
+      "category": "Plushies",
+      "price": 239,
+      "costPrice": 120,
+      "stock": 2,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:12:01.568Z"
+    },
+    {
+      "id": "prod_1790921534812",
+      "name": "Kuromi ",
+      "category": "Plushies",
+      "price": 269,
+      "costPrice": 160,
+      "stock": 2,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:12:15.046Z"
+    },
+    {
+      "id": "prod_1790921682774",
+      "name": "Hello kitty Keychain",
+      "category": "Accessories",
+      "price": 99,
+      "costPrice": 15,
+      "stock": 12,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:14:42.996Z"
+    },
+    {
+      "id": "prod_1790921695782",
+      "name": "Spiderman keychain",
+      "category": "Accessories",
+      "price": 99,
+      "costPrice": 15,
+      "stock": 12,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:14:56.018Z"
+    },
+    {
+      "id": "prod_1790921720249",
+      "name": "Naruto keychain",
+      "category": "Accessories",
+      "price": 99,
+      "costPrice": 75,
+      "stock": 12,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:15:20.649Z"
+    },
+    {
+      "id": "prod_1790921750334",
+      "name": "Car keychain",
+      "category": "Accessories",
+      "price": 59,
+      "costPrice": 12,
+      "stock": 20,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:15:50.555Z"
+    },
+    {
+      "id": "prod_1790921828874",
+      "name": "Bunny/Panda lamp",
+      "category": "Accessories",
+      "price": 129,
+      "costPrice": 50,
+      "stock": 20,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:17:09.086Z"
+    },
+    {
+      "id": "prod_1790921845618",
+      "name": "Panda lamp big",
+      "category": "Accessories",
+      "price": 339,
+      "costPrice": 230,
+      "stock": 2,
+      "description": "",
+      "image": "/logo.png",
+      "createdAt": "2026-10-02T06:17:35.963Z"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust_1790921884630",
+      "customerId": "VEL-1961",
+      "name": "No clue",
+      "phone": "64646494649",
+      "email": "",
+      "totalVisits": 1,
+      "totalSpent": 99,
+      "createdAt": "2026-10-02T06:18:04.630Z",
+      "lastVisit": "2026-10-02T06:18:04.630Z"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "inv_1790921884383",
+      "invoiceNumber": "VEL-884379",
+      "dayId": "2026-10-02",
+      "createdAt": "2026-10-02T06:18:04.383Z",
+      "customer": {
+        "name": "No clue",
+        "phone": "64646494649",
+        "email": "",
+        "customerId": "VEL-1961"
+      },
+      "items": [
+        {
+          "id": "prod_1790921333177",
+          "name": "Fluffy Keychain",
+          "category": "Accessories",
+          "price": 99,
+          "costPrice": 50,
+          "quantity": 1
+        }
+      ],
+      "subtotal": 99,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "total": 99,
+      "mode": "normal",
+      "paymentMethod": "Google Pay",
+      "cashTendered": null,
+      "changeGiven": null,
+      "upiId": "anshajshaji3-2@okicici",
+      "status": "PAID"
+    }
+  ],
   "dailyClosings": [],
   "purchaseBills": [],
   "settings": {

@@ -30,7 +30,21 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ihjpksrxjqgpulbwybci.s
 const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
 const DEFAULT_UPI_ID = process.env.DEFAULT_UPI_ID || 'anshajshaji3-2@okicici';
 
-// Initialize Supabase Client
+// Dynamic Supabase Client helper (picks up .env updates automatically)
+function getSupabaseClient() {
+  try {
+    if (typeof process.loadEnvFile === 'function') {
+      process.loadEnvFile();
+    }
+  } catch (e) {}
+  const key = process.env.SUPABASE_KEY || SUPABASE_KEY;
+  if (!key || key === 'your_supabase_anon_key_here' || key === 'dummy_key') {
+    return null;
+  }
+  return createClient(SUPABASE_URL, key);
+}
+
+// Fallback client for static operations
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY || 'dummy_key');
 
 // Configure Upload Paths (support Vercel read-only filesystem with /tmp)
@@ -41,7 +55,9 @@ const baseUploadDir = process.env.VERCEL
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 app.use('/uploads', express.static(baseUploadDir));
+app.use('/api/uploads', express.static(baseUploadDir));
 app.use('/public', express.static(path.join(rootDir, 'public')));
+app.use('/api/public', express.static(path.join(rootDir, 'public')));
 
 // Configure Multer for Uploads
 const storage = multer.diskStorage({
@@ -324,9 +340,43 @@ app.post('/api/send-invoice', async (req, res) => {
   }
 });
 
-// 2. Fetch All Store Data
-app.get('/api/data', (req, res) => {
+// Helper to sync products from Supabase
+async function syncProductsFromSupabase(db) {
+  const client = getSupabaseClient();
+  if (!client) return { synced: false, reason: 'SUPABASE_KEY not configured in .env' };
+
+  try {
+    const { data: supaProducts, error } = await client.from('products').select('*');
+    if (error) {
+      console.warn('Supabase products fetch notice:', error.message);
+      return { synced: false, error: error.message };
+    }
+    if (supaProducts && supaProducts.length > 0) {
+      db.products = supaProducts.map(p => ({
+        id: p.id,
+        name: p.name,
+        category: p.category || 'General',
+        price: Number(p.price || 0),
+        costPrice: Number(p.cost_price ?? p.costPrice ?? 0),
+        stock: Number(p.stock ?? 50),
+        description: p.description || '',
+        image: p.image || '/logo.png',
+        createdAt: p.created_at || p.createdAt || new Date().toISOString()
+      }));
+      saveDb(db);
+      return { synced: true, count: supaProducts.length };
+    }
+    return { synced: true, count: 0 };
+  } catch (err) {
+    console.warn('Supabase sync error:', err.message);
+    return { synced: false, error: err.message };
+  }
+}
+
+// 2. Fetch All Store Data (Auto-syncs with Supabase if configured)
+app.get('/api/data', async (req, res) => {
   const db = loadDb();
+  await syncProductsFromSupabase(db);
   res.json({
     products: db.products || [],
     customers: db.customers || [],
@@ -334,6 +384,16 @@ app.get('/api/data', (req, res) => {
     dailyClosings: db.dailyClosings || [],
     purchaseBills: db.purchaseBills || [],
     settings: db.settings || {}
+  });
+});
+
+// Explicit Sync with Supabase Endpoint
+app.get('/api/sync-supabase', async (req, res) => {
+  const db = loadDb();
+  const result = await syncProductsFromSupabase(db);
+  res.json({
+    ...result,
+    products: db.products || []
   });
 });
 
@@ -457,17 +517,41 @@ app.post('/api/purchase-bills', (req, res) => {
 });
 
 // 7. Product Management (Save/Edit/Delete)
-app.post('/api/products', (req, res) => {
+app.post('/api/products', async (req, res) => {
   const { product, action } = req.body;
   const db = loadDb();
   db.products = db.products || [];
+  const client = getSupabaseClient();
 
   if (action === 'delete') {
     db.products = db.products.filter(p => p.id !== product.id);
+    if (client) {
+      try {
+        await client.from('products').delete().eq('id', product.id);
+      } catch (e) {
+        console.warn('Supabase product delete notice:', e.message);
+      }
+    }
   } else if (action === 'update') {
     const idx = db.products.findIndex(p => p.id === product.id);
     if (idx >= 0) {
       db.products[idx] = { ...db.products[idx], ...product };
+    }
+    if (client) {
+      try {
+        await client.from('products').upsert([{
+          id: product.id,
+          name: product.name,
+          category: product.category || 'General',
+          price: Number(product.price || 0),
+          cost_price: Number(product.costPrice || 0),
+          stock: Number(product.stock || 0),
+          description: product.description || '',
+          image: product.image || '/logo.png'
+        }]);
+      } catch (e) {
+        console.warn('Supabase product update notice:', e.message);
+      }
     }
   } else {
     // Add new
@@ -477,6 +561,22 @@ app.post('/api/products', (req, res) => {
       createdAt: new Date().toISOString()
     };
     db.products.push(newProd);
+    if (client) {
+      try {
+        await client.from('products').upsert([{
+          id: newProd.id,
+          name: newProd.name,
+          category: newProd.category || 'General',
+          price: Number(newProd.price || 0),
+          cost_price: Number(newProd.costPrice || 0),
+          stock: Number(newProd.stock || 0),
+          description: newProd.description || '',
+          image: newProd.image || '/logo.png'
+        }]);
+      } catch (e) {
+        console.warn('Supabase product insert notice:', e.message);
+      }
+    }
   }
 
   saveDb(db);
@@ -490,13 +590,25 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   }
   const isBill = req.path.includes('bill');
   const relativePath = `/uploads/${isBill ? 'bills' : 'products'}/${req.file.filename}`;
-  res.json({ success: true, url: relativePath });
+  let dataUrl = relativePath;
+  try {
+    const fileBuf = fs.readFileSync(req.file.path);
+    dataUrl = `data:${req.file.mimetype || 'image/jpeg'};base64,${fileBuf.toString('base64')}`;
+  } catch (e) {}
+  res.json({ success: true, url: relativePath, dataUrl });
 });
 
 // 9. Upload Purchase Bill with File
 app.post('/api/upload-bill', upload.single('receipt'), (req, res) => {
   const receiptUrl = req.file ? `/uploads/bills/${req.file.filename}` : null;
-  res.json({ success: true, receiptUrl });
+  let dataUrl = receiptUrl;
+  if (req.file) {
+    try {
+      const fileBuf = fs.readFileSync(req.file.path);
+      dataUrl = `data:${req.file.mimetype || 'image/jpeg'};base64,${fileBuf.toString('base64')}`;
+    } catch (e) {}
+  }
+  res.json({ success: true, receiptUrl, dataUrl });
 });
 
 // 9b. OCR Purchase Bill Endpoint (Auto extracts Total, Vendor, Date, Bill Number with 6s timeout)

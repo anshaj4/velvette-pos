@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Package, Plus, Edit2, Trash2, Upload, TrendingUp, Sparkles, AlertCircle, Camera } from 'lucide-react';
 import { saveProduct, uploadFile } from '../services/api';
+import { compressImageToDataUrl } from '../utils/imageHelper';
 import CameraCaptureModal from './CameraCaptureModal';
 
 export default function ProductManagement({
@@ -48,11 +49,21 @@ export default function ProductManagement({
     setModalOpen(true);
   };
 
+  const handlePhotoSelected = async (file) => {
+    if (!file) return;
+    setImageFile(file);
+    try {
+      const dataUrl = await compressImageToDataUrl(file);
+      setImagePreview(dataUrl);
+    } catch (e) {
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      handlePhotoSelected(file);
     }
   };
 
@@ -66,7 +77,9 @@ export default function ProductManagement({
     setIsSaving(true);
     try {
       let imageUrl = editingProduct?.image || '/logo.png';
-      if (imageFile) {
+      if (imagePreview && imagePreview.startsWith('data:')) {
+        imageUrl = imagePreview;
+      } else if (imageFile) {
         imageUrl = await uploadFile(imageFile, false);
       }
 
@@ -412,10 +425,7 @@ export default function ProductManagement({
         isOpen={showCameraModal}
         onClose={() => setShowCameraModal(false)}
         title="Take Product Picture"
-        onCapture={(file) => {
-          setImageFile(file);
-          setImagePreview(URL.createObjectURL(file));
-        }}
+        onCapture={handlePhotoSelected}
       />
     </div>
   );

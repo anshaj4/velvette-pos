@@ -2,9 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { 
   Search, Plus, Minus, Trash2, Tag, 
   Sparkles, Zap, ArrowRight, ArrowLeft, ShoppingBag, UserCheck, ShieldCheck, 
-  Package, Upload, X, Loader2, Camera 
+  Package, Upload, X, Loader2, Camera, Edit2 
 } from 'lucide-react';
 import { saveProduct, uploadFile } from '../services/api';
+import { compressImageToDataUrl } from '../utils/imageHelper';
 import CameraCaptureModal from './CameraCaptureModal';
 
 export default function PosBilling({
@@ -23,8 +24,9 @@ export default function PosBilling({
   const [discountPercent, setDiscountPercent] = useState(0);
   const [mobileView, setMobileView] = useState('catalog'); // 'catalog' | 'cart'
 
-  // Quick Add Product from Screen Modal State
+  // Quick Add / Edit Product from Screen Modal State
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [newProdName, setNewProdName] = useState('');
   const [newProdCat, setNewProdCat] = useState('Plushies');
   const [newProdPrice, setNewProdPrice] = useState('');
@@ -35,6 +37,43 @@ export default function PosBilling({
   const [newProdPreview, setNewProdPreview] = useState('');
   const [isSavingProd, setIsSavingProd] = useState(false);
   const [showCameraModal, setShowCameraModal] = useState(false);
+
+  const openAddModal = () => {
+    setEditingProduct(null);
+    setNewProdName('');
+    setNewProdCat('Plushies');
+    setNewProdPrice('');
+    setNewProdCost('');
+    setNewProdStock('50');
+    setNewProdDesc('');
+    setNewProdFile(null);
+    setNewProdPreview('');
+    setShowAddModal(true);
+  };
+
+  const openEditProduct = (prod) => {
+    setEditingProduct(prod);
+    setNewProdName(prod.name || '');
+    setNewProdCat(prod.category || 'Plushies');
+    setNewProdPrice(prod.price || '');
+    setNewProdCost(prod.costPrice || '');
+    setNewProdStock(prod.stock || 50);
+    setNewProdDesc(prod.description || '');
+    setNewProdFile(null);
+    setNewProdPreview(prod.image || '');
+    setShowAddModal(true);
+  };
+
+  const handlePhotoSelected = async (file) => {
+    if (!file) return;
+    setNewProdFile(file);
+    try {
+      const dataUrl = await compressImageToDataUrl(file);
+      setNewProdPreview(dataUrl);
+    } catch (e) {
+      setNewProdPreview(URL.createObjectURL(file));
+    }
+  };
 
   // Extract categories
   const categories = useMemo(() => {
@@ -165,7 +204,7 @@ export default function PosBilling({
     });
   };
 
-  // Quick Add Product Submit Handler
+  // Quick Add / Edit Product Submit Handler
   const handleQuickAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) {
@@ -175,13 +214,15 @@ export default function PosBilling({
 
     setIsSavingProd(true);
     try {
-      let imageUrl = '/logo.png';
-      if (newProdFile) {
+      let imageUrl = editingProduct?.image || '/logo.png';
+      if (newProdPreview && newProdPreview.startsWith('data:')) {
+        imageUrl = newProdPreview;
+      } else if (newProdFile) {
         imageUrl = await uploadFile(newProdFile, false);
       }
 
       const productPayload = {
-        id: 'prod_' + Date.now(),
+        id: editingProduct ? editingProduct.id : ('prod_' + Date.now()),
         name: newProdName,
         category: newProdCat,
         price: Number(newProdPrice),
@@ -191,13 +232,14 @@ export default function PosBilling({
         image: imageUrl
       };
 
-      const res = await saveProduct(productPayload, 'create');
+      const res = await saveProduct(productPayload, editingProduct ? 'update' : 'create');
       if (onProductsUpdated) {
         onProductsUpdated(res.products);
       }
       setShowAddModal(false);
+      setEditingProduct(null);
     } catch (err) {
-      alert('Error adding product: ' + err.message);
+      alert('Error saving product: ' + err.message);
     } finally {
       setIsSavingProd(false);
     }
@@ -265,16 +307,7 @@ export default function PosBilling({
                 type="button"
                 className="btn-checkout"
                 style={{ width: 'auto', padding: '9px 18px', fontSize: 13, gap: 6, whiteSpace: 'nowrap' }}
-                onClick={() => {
-                  setNewProdName('');
-                  setNewProdPrice('');
-                  setNewProdCost('');
-                  setNewProdStock('50');
-                  setNewProdDesc('');
-                  setNewProdFile(null);
-                  setNewProdPreview('');
-                  setShowAddModal(true);
-                }}
+                onClick={openAddModal}
                 title="Add a new product directly from this screen"
               >
                 <Plus size={16} />
@@ -313,17 +346,7 @@ export default function PosBilling({
                 <button
                   type="button"
                   className="btn-add-product-screen"
-                  onClick={() => {
-                    setNewProdName('');
-                    setNewProdCat('Apparel');
-                    setNewProdPrice('');
-                    setNewProdCost('');
-                    setNewProdStock('50');
-                    setNewProdDesc('');
-                    setNewProdFile(null);
-                    setNewProdPreview('');
-                    setShowAddModal(true);
-                  }}
+                  onClick={openAddModal}
                 >
                   <Plus size={16} />
                   <span>Add First Product</span>
@@ -335,6 +358,17 @@ export default function PosBilling({
               return (
                 <div key={product.id} className="product-card">
                   <div className="product-image-container">
+                    <button
+                      type="button"
+                      className="product-card-edit-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditProduct(product);
+                      }}
+                      title="Update product photo or details"
+                    >
+                      <Camera size={13} />
+                    </button>
                     <img
                       src={product.image || '/logo.png'}
                       alt={product.name}
@@ -678,11 +712,11 @@ export default function PosBilling({
                 <Package size={20} />
               </div>
               <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 900, margin: 0 }}>
-                Add New Product
+                {editingProduct ? 'Edit Product & Photo' : 'Add New Product'}
               </h2>
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
-              Add a new item to catalog immediately. It will appear on this screen instantly.
+              {editingProduct ? 'Update product details or take/upload a fresh product photo.' : 'Add a new item to catalog immediately. It will appear on this screen instantly.'}
             </p>
 
             <form onSubmit={handleQuickAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -756,7 +790,7 @@ export default function PosBilling({
               </div>
 
               <div className="field-group">
-                <label>Product Picture (Optional)</label>
+                <label>Product Picture</label>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   <button
                     type="button"
@@ -797,13 +831,9 @@ export default function PosBilling({
                     <input
                       type="file"
                       accept="image/*"
-                      capture="environment"
                       onChange={e => {
                         const f = e.target.files[0];
-                        if (f) {
-                          setNewProdFile(f);
-                          setNewProdPreview(URL.createObjectURL(f));
-                        }
+                        if (f) handlePhotoSelected(f);
                       }}
                       style={{ display: 'none' }}
                     />
@@ -815,7 +845,7 @@ export default function PosBilling({
                     <img
                       src={newProdPreview}
                       alt="Preview"
-                      style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 8, background: '#FFF0F6', padding: 3, border: '1px solid var(--border-soft)' }}
+                      style={{ width: 56, height: 56, objectFit: 'contain', borderRadius: 8, background: '#FFF0F6', padding: 3, border: '1px solid var(--border-soft)' }}
                     />
                     <div>
                       <span style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, display: 'block' }}>Photo attached</span>
@@ -824,7 +854,7 @@ export default function PosBilling({
                         onClick={() => { setNewProdFile(null); setNewProdPreview(''); }}
                         style={{ background: 'none', border: 'none', color: '#999', fontSize: 11, cursor: 'pointer', padding: 0 }}
                       >
-                        Remove
+                        Remove Photo
                       </button>
                     </div>
                   </div>
@@ -837,7 +867,7 @@ export default function PosBilling({
                 disabled={isSavingProd}
                 style={{ marginTop: 6 }}
               >
-                <span>{isSavingProd ? 'Saving Product...' : 'Add to Catalog Now'}</span>
+                <span>{isSavingProd ? 'Saving Product...' : (editingProduct ? 'Save Changes' : 'Add to Catalog Now')}</span>
               </button>
             </form>
           </div>
@@ -849,10 +879,7 @@ export default function PosBilling({
         isOpen={showCameraModal}
         onClose={() => setShowCameraModal(false)}
         title="Take Product Picture"
-        onCapture={(file) => {
-          setNewProdFile(file);
-          setNewProdPreview(URL.createObjectURL(file));
-        }}
+        onCapture={handlePhotoSelected}
       />
     </div>
   );
